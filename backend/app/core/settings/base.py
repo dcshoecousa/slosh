@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 class BaseAppSettings(BaseSettings):
     app_name: str = "FastAPI PG Template"
@@ -23,9 +25,10 @@ class BaseAppSettings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
+    version: str = "1.0.0"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file= _PROJECT_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

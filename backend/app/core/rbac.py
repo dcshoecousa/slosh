@@ -9,7 +9,7 @@ from app.core.exceptions import AuthorizationException
 from app.models.enums import UserRole
 from app.models.casbin_rule import CasbinRule
 from app.models.user import User
-from app.rbac.default_policy import DEFAULT_POLICY_RULES
+
 
 MODEL_PATH = Path(__file__).resolve().parent.parent / "rbac" / "model.conf"
 USER_SUBJECT_PREFIX = "user:"
@@ -30,6 +30,8 @@ async def _build_enforcer(session: AsyncSession | None = None) -> casbin.AsyncEn
 
 
 def _split_policy_rules() -> tuple[list[list[str]], list[list[str]]]:
+    from app.rbac.default_policy import DEFAULT_POLICY_RULES
+
     permission_rules: list[list[str]] = []
     grouping_rules: list[list[str]] = []
 

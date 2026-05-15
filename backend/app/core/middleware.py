@@ -1,5 +1,6 @@
 from time import perf_counter
 
+from app.core.settings import settings
 from asgi_correlation_id import correlation_id
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -20,19 +21,22 @@ class RequestContextLogMiddleware(BaseHTTPMiddleware):
         except Exception:
             duration_ms = (perf_counter() - start_time) * 1000
             logger.exception(
-                "Request failed: {} {} ({:.2f} ms) [request_id={}]",
+                "Request failed: {} {} ({:.2f} ms)",
                 request.method,
                 request.url.path,
                 duration_ms,
-                request_id,
             )
             raise
 
         request_id = correlation_id.get() or request_id
         request.state.request_id = request_id
         duration_ms = (perf_counter() - start_time) * 1000
+
+        response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
+        response.headers["X-Version"] = settings.version
+
         logger.info(
-            "Request completed: {} {} -> {} ({:.2f} ms) [request_id={}]",
+            "Request completed: {} {} -> {} ({:.2f} ms)",
             request.method,
             request.url.path,
             response.status_code,

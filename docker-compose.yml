@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: slosh-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-slosh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sloshpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-slosh_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-slosh} -d ${POSTGRES_DB:-slosh_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: slosh-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8044:8044"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - slosh-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: slosh-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - slosh-network
+
+# 数据卷
+volumes:
+  postgres_data:
+    driver: local
+
+# 网络配置
+networks:
+  slosh-network:
+    driver: bridge
