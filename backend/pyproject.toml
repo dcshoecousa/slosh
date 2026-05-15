@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "fastapi-pg-template"
+version = "0.1.0"
+description = "FastAPI and PostgreSQL project scaffold"
+authors = ["Codex <codex@example.com>"]
+readme = "README.md"
+packages = [{ include = "app" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.115.12"
+uvicorn = { version = "0.34.2", extras = ["standard"] }
+sqlalchemy = "2.0.40"
+asyncpg = "0.30.0"
+alembic = "1.15.2"
+pydantic-settings = "2.9.1"
+email-validator = "2.2.0"
+pwdlib = { version = "0.2.1", extras = ["argon2"] }
+pyjwt = "2.9.0"
+python-multipart = "0.0.20"
+loguru = "0.7.2"
+asgi-correlation-id = "4.3.4"
+orjson = "3.10.18"
+pycasbin = "2.8.0"
+casbin-async-sqlalchemy-adapter = "1.17.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.5"
+pytest-asyncio = "0.25.3"
+httpx = "0.28.1"
+aiosqlite = "0.21.0"
+pre-commit = "4.2.0"
+ruff = "0.11.11"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
