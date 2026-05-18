@@ -2,8 +2,8 @@
   <section class="page-grid">
     <div class="toolbar">
       <div>
-        <p class="eyebrow">RBAC explorer</p>
-        <h3>Review effective permissions and test access decisions in real time.</h3>
+        <p class="eyebrow">Permissions</p>
+        <h3>Review current access and test permission checks.</h3>
       </div>
       <div class="toolbar__badge">
         <span>Roles</span>
@@ -17,12 +17,13 @@
           <h4>Effective permissions</h4>
           <span class="surface-card__meta">{{ permissions.length }} grants</span>
         </div>
-        <ul class="permission-list permission-list--dense">
+        <ul v-if="permissions.length" class="permission-list permission-list--dense">
           <li v-for="item in permissions" :key="`${item.resource}-${item.action}`">
             <strong>{{ item.resource }}</strong>
             <span>{{ item.action }}</span>
           </li>
         </ul>
+        <p v-else class="empty-state">No permissions are available for the current account.</p>
       </article>
 
       <article class="surface-card surface-card--accent">
@@ -95,7 +96,7 @@ export default {
         this.probeResult = await checkPermission(this.probe.resource, this.probe.action);
       } catch (error) {
         this.errorMessage =
-          "Permission probe failed. The endpoint may be unavailable or the session may lack rbac:check.";
+          "Permission probe failed. The endpoint may be unavailable or the session may not allow rbac:check.";
       } finally {
         this.checking = false;
       }

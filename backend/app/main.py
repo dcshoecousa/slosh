@@ -3,17 +3,18 @@ from contextlib import asynccontextmanager
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 
-from app.api.responses import build_success_response
 from app.api.error_handlers import register_exception_handlers
+from app.api.responses import build_success_response
 from app.api.router import api_router
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextLogMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from app.schemas.common import ApiResponse
 from app.core.settings import BaseAppSettings, settings
 from app.db.database import close_db_connections, init_db
+from app.schemas.common import ApiResponse
+from app.task.broker import shutdown_taskiq, startup_taskiq
 
 
 def create_app(
@@ -31,7 +32,11 @@ def create_app(
         if run_init_db:
             await init_db()
             logger.info("Database initialization complete.")
+        if configured_settings.taskiq_enabled:
+            await startup_taskiq()
         yield
+        if configured_settings.taskiq_enabled:
+            await shutdown_taskiq()
         await close_db_connections()
 
     app = FastAPI(
@@ -47,7 +52,8 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(GZipMiddleware, minimum_size=1000)  # 仅对大于 1000 字节的响应进行压缩
+    # Only compress responses large enough to benefit from gzip.
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(RequestContextLogMiddleware)
     app.add_middleware(
         CorrelationIdMiddleware,
@@ -73,8 +79,14 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
+
     log_config = {
         "version": 1,
         "disable_existing_loggers": False,
     }
-    uvicorn.run(app, host=settings.app_host, port=settings.app_port, log_config=log_config)
+    uvicorn.run(
+        app,
+        host=settings.app_host,
+        port=settings.app_port,
+        log_config=log_config,
+    )

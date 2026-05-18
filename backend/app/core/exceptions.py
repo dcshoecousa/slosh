@@ -40,3 +40,12 @@ class AuthorizationException(AppException):
 class DatabaseException(AppException):
     def __init__(self, message: str = "Database operation failed.") -> None:
         super().__init__(status_code=500, code="database_error", message=message)
+
+
+class ServiceUnavailableException(AppException):
+    def __init__(self, message: str = "Service is temporarily unavailable.") -> None:
+        super().__init__(
+            status_code=503,
+            code="service_unavailable",
+            message=message,
+        )

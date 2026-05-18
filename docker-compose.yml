@@ -37,6 +37,21 @@ services:
     networks:
       - slosh-network
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: slosh-worker
+    command: poetry run python -m taskiq worker app.task.worker:broker app.task.tasks
+    env_file:
+      - ./backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - slosh-network
+
   # 前端服务
   frontend:
     build:

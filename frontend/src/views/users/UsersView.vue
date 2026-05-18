@@ -2,8 +2,8 @@
   <section class="page-grid">
     <div class="toolbar">
       <div>
-        <p class="eyebrow">Directory</p>
-        <h3>Inspect the operator roster with a fast, searchable table.</h3>
+        <p class="eyebrow">Users</p>
+        <h3>Search and review the current user directory.</h3>
       </div>
       <label class="search-input">
         <span>Search</span>
@@ -46,6 +46,7 @@
           </tbody>
         </table>
       </div>
+      <p v-if="!filteredUsers.length" class="empty-state">No users match the current filter.</p>
     </article>
   </section>
 </template>
@@ -88,7 +89,7 @@ export default {
         this.users = payload.items || [];
       } catch (error) {
         this.errorMessage =
-          "Unable to load /users right now. Make sure the backend is running and the current account has users:read permission.";
+          "Unable to load /users right now. Make sure the backend is running and the account has users:read permission.";
       }
     },
     formatDate(value) {

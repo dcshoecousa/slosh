@@ -5,6 +5,7 @@ import LoginView from "@/views/auth/LoginView.vue";
 import DashboardView from "@/views/dashboard/DashboardView.vue";
 import UsersView from "@/views/users/UsersView.vue";
 import PermissionsView from "@/views/permissions/PermissionsView.vue";
+import RoleAdminView from "@/views/rbac/RoleAdminView.vue";
 import { getAccessToken } from "@/utils/session";
 
 Vue.use(Router);
@@ -54,6 +55,14 @@ const router = new Router({
           component: PermissionsView,
           meta: {
             title: "Permissions"
+          }
+        },
+        {
+          path: "/role-admin",
+          name: "role-admin",
+          component: RoleAdminView,
+          meta: {
+            title: "Role Admin"
           }
         }
       ]

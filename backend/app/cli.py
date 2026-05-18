@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-import argparse
 import asyncio
 import importlib
 import sys
+from typing import Annotated
+
+import typer
 
 from app.core.exceptions import ConflictException
 from app.core.rbac import get_user_role
@@ -13,60 +15,11 @@ from app.models.enums import UserRole
 from app.schemas.user import UserCreate
 from app.services.user_service import create_user_with_role
 
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Project management CLI.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    create_user_parser = subparsers.add_parser(
-        "create-user",
-        help="Create a user.",
-    )
-    create_user_parser.add_argument("--email", required=True, help="User email.")
-    create_user_parser.add_argument(
-        "--password",
-        required=True,
-        help="User password.",
-    )
-    create_user_parser.add_argument(
-        "--full-name",
-        default=None,
-        help="User full name.",
-    )
-    create_user_parser.add_argument(
-        "--role",
-        choices=[role.value for role in UserRole],
-        default=UserRole.MEMBER.value,
-        help="User role.",
-    )
-    create_user_parser.add_argument(
-        "--inactive",
-        action="store_true",
-        help="Create the user as inactive.",
-    )
-
-    serve_parser = subparsers.add_parser(
-        "serve",
-        help="Start the API service.",
-    )
-    serve_parser.add_argument(
-        "--host",
-        default=settings.app_host,
-        help="Bind host.",
-    )
-    serve_parser.add_argument(
-        "--port",
-        type=int,
-        default=settings.app_port,
-        help="Bind port.",
-    )
-    serve_parser.add_argument(
-        "--reload",
-        action="store_true",
-        help="Enable auto reload.",
-    )
-
-    return parser
+app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Project management CLI.",
+)
 
 
 async def create_user_command(
@@ -120,39 +73,73 @@ def serve_command(
     )
 
 
+@app.command("create-user")
+def create_user_cli(
+    email: Annotated[str, typer.Option(help="User email.")],
+    password: Annotated[str, typer.Option(help="User password.")],
+    full_name: Annotated[
+        str | None,
+        typer.Option(help="User full name."),
+    ] = None,
+    role: Annotated[
+        UserRole,
+        typer.Option(
+            case_sensitive=False,
+            help="User role.",
+        ),
+    ] = UserRole.MEMBER,
+    inactive: Annotated[
+        bool,
+        typer.Option(help="Create the user as inactive."),
+    ] = False,
+) -> None:
+    asyncio.run(
+        create_user_command(
+            email=email,
+            password=password,
+            full_name=full_name,
+            role=role.value,
+            is_active=not inactive,
+        )
+    )
+
+
+@app.command("serve")
+def serve_cli(
+    host: Annotated[
+        str,
+        typer.Option(help="Bind host."),
+    ] = settings.app_host,
+    port: Annotated[
+        int,
+        typer.Option(help="Bind port."),
+    ] = settings.app_port,
+    reload: Annotated[
+        bool,
+        typer.Option(help="Enable auto reload."),
+    ] = False,
+) -> None:
+    serve_command(
+        host=host,
+        port=port,
+        reload=reload,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
     try:
-        if args.command == "create-user":
-            asyncio.run(
-                create_user_command(
-                    email=args.email,
-                    password=args.password,
-                    full_name=args.full_name,
-                    role=args.role,
-                    is_active=not args.inactive,
-                )
-            )
-            return 0
-
-        if args.command == "serve":
-            serve_command(
-                host=args.host,
-                port=args.port,
-                reload=args.reload,
-            )
-            return 0
+        app(
+            args=argv,
+            standalone_mode=False,
+            prog_name="python -m app.cli",
+        )
+        return 0
     except ConflictException as exc:
         print(f"Conflict: {exc}", file=sys.stderr)
         return 1
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-
-    parser.print_help()
-    return 1
 
 
 if __name__ == "__main__":

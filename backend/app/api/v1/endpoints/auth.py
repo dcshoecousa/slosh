@@ -52,15 +52,6 @@ async def login_for_access_token(
     )
 
 
-@router.post("/oauth2/token", response_model=Token, include_in_schema=False)
-async def oauth2_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: AsyncSession = Depends(get_db_session),
-) -> Token:
-    user = await authenticate_user(session, form_data.username, form_data.password)
-    return create_user_token(user)
-
-
 @router.get("/me", response_model=ApiResponse[UserRead])
 async def read_current_user(
     request: Request,

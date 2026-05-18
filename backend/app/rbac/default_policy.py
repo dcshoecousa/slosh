@@ -1,1 +1,15 @@
-DEFAULT_POLICY_RULES = []
+DEFAULT_POLICY_RULES = [
+    ("p", "member", "auth", "read"),
+    ("p", "member", "rbac", "read"),
+    ("p", "member", "rbac", "check"),
+    ("p", "admin", "users", "create"),
+    ("p", "admin", "users", "read"),
+    ("p", "admin", "users", "update"),
+    ("p", "admin", "users", "delete"),
+    ("p", "admin", "rbac", "inspect"),
+    ("p", "admin", "rbac", "assign_role"),
+    ("p", "admin", "rbac", "revoke_role"),
+    ("p", "admin", "rbac", "grant_permission"),
+    ("p", "admin", "rbac", "revoke_permission"),
+    ("g", "admin", "member"),
+]

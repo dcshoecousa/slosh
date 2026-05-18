@@ -99,6 +99,55 @@ python -m app.cli serve --host 127.0.0.1 --port 8044 --reload
 - Swagger: `http://127.0.0.1:8000/docs`
 - Health Check: `http://127.0.0.1:8000/api/v1/health`
 
+### Start Taskiq Worker
+
+```powershell
+python -m taskiq worker app.task.worker:broker app.task.tasks
+```
+
+`app/task/` 目录现在包含：
+
+- `broker.py`: Taskiq broker 和 result backend 初始化
+- `tasks.py`: 示例任务
+- `worker.py`: worker 入口
+
+启用队列前，请在 `.env` 中至少配置：
+
+```env
+TASKIQ_ENABLED=true
+TASKIQ_DATABASE_URL=postgresql://slosh:sloshpassword@127.0.0.1:5432/slosh_db
+```
+
+如果 `TASKIQ_DATABASE_URL` 留空，会回退使用 `DATABASE_URL`。
+
+### Task APIs
+
+- `POST /api/v1/tasks/echo`: 入队一个简单 echo 任务
+- `POST /api/v1/tasks/user-summary`: 入队一个用户统计任务
+- `GET /api/v1/tasks/{task_id}`: 查询任务状态
+
+示例：
+
+```powershell
+$token = "<access_token>"
+
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://127.0.0.1:8000/api/v1/tasks/echo" `
+  -Headers @{ Authorization = "Bearer $token" } `
+  -ContentType "application/json" `
+  -Body '{"message":"hello taskiq"}'
+```
+
+返回的 `task_id` 可以继续查询：
+
+```powershell
+Invoke-RestMethod `
+  -Method Get `
+  -Uri "http://127.0.0.1:8000/api/v1/tasks/<task_id>?wait=true&timeout_seconds=5" `
+  -Headers @{ Authorization = "Bearer $token" }
+```
+
 ## Authentication Flow
 
 ### Register
@@ -189,6 +238,13 @@ poetry run pre-commit run --all-files
 
 - `APP_ENV`
 - `DATABASE_URL`
+- `TASKIQ_ENABLED`
+- `TASKIQ_DATABASE_URL`
+- `TASKIQ_KEEP_RESULTS`
+- `TASKIQ_MESSAGE_TABLE_NAME`
+- `TASKIQ_RESULT_TABLE_NAME`
+- `TASKIQ_CHANNEL_NAME`
+- `TASKIQ_POLL_INTERVAL_SECONDS`
 - `JWT_SECRET_KEY`
 - `JWT_ALGORITHM`
 - `ACCESS_TOKEN_EXPIRE_MINUTES`
@@ -200,6 +256,12 @@ poetry run pre-commit run --all-files
 ```powershell
 Copy-Item .env.example .env
 docker compose up --build
+```
+
+如果要同时启动 API 和 worker：
+
+```powershell
+docker compose up --build postgres backend worker
 ```
 
 ## Notes

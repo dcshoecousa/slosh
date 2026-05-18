@@ -16,6 +16,13 @@ class BaseAppSettings(BaseSettings):
         ""
     )
     auto_create_tables: bool = False
+    taskiq_enabled: bool = False
+    taskiq_database_url: str | None = None
+    taskiq_keep_results: bool = True
+    taskiq_message_table_name: str = "taskiq_messages"
+    taskiq_result_table_name: str = "taskiq_results"
+    taskiq_channel_name: str = "taskiq"
+    taskiq_poll_interval_seconds: float = 1.0
     jwt_secret_key: str = "change-me-in-env"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
@@ -42,3 +49,11 @@ class BaseAppSettings(BaseSettings):
                 return []
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
+
+    @property
+    def taskiq_dsn(self) -> str:
+        raw_dsn = self.taskiq_database_url or self.database_url
+        if raw_dsn.startswith("postgresql+"):
+            scheme, rest = raw_dsn.split("://", maxsplit=1)
+            return f"{scheme.split('+', maxsplit=1)[0]}://{rest}"
+        return raw_dsn

@@ -1,11 +1,15 @@
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typer.testing import CliRunner
 
-from app.cli import create_user_command, main, serve_command
+from app.cli import app, create_user_command, main, serve_command
+from app.core.exceptions import ConflictException
 from app.core.rbac import build_user_subject
 from app.models.casbin_rule import CasbinRule
 from app.models.user import User
+
+runner = CliRunner()
 
 
 @pytest.mark.asyncio
@@ -85,9 +89,12 @@ def test_main_dispatches_serve_command(monkeypatch) -> None:
 
     monkeypatch.setattr("app.cli.serve_command", fake_serve_command)
 
-    exit_code = main(["serve", "--host", "127.0.0.1", "--port", "9100", "--reload"])
+    result = runner.invoke(
+        app,
+        ["serve", "--host", "127.0.0.1", "--port", "9100", "--reload"],
+    )
 
-    assert exit_code == 0
+    assert result.exit_code == 0
     assert captured == {
         "host": "127.0.0.1",
         "port": 9100,
@@ -114,7 +121,8 @@ def test_main_dispatches_create_user_command(monkeypatch) -> None:
 
     monkeypatch.setattr("app.cli.create_user_command", fake_create_user_command)
 
-    exit_code = main(
+    result = runner.invoke(
+        app,
         [
             "create-user",
             "--email",
@@ -128,7 +136,7 @@ def test_main_dispatches_create_user_command(monkeypatch) -> None:
         ]
     )
 
-    assert exit_code == 0
+    assert result.exit_code == 0
     assert captured == {
         "email": "cli@example.com",
         "password": "password123",
@@ -136,3 +144,26 @@ def test_main_dispatches_create_user_command(monkeypatch) -> None:
         "role": "admin",
         "is_active": True,
     }
+
+
+def test_main_returns_error_code_for_conflict(monkeypatch, capsys) -> None:
+    async def fake_create_user_command(**kwargs) -> None:
+        _ = kwargs
+        raise ConflictException(message="User already exists.")
+
+    monkeypatch.setattr("app.cli.create_user_command", fake_create_user_command)
+
+    exit_code = main(
+        [
+            "create-user",
+            "--email",
+            "cli@example.com",
+            "--password",
+            "password123",
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Conflict: User already exists." in captured.err

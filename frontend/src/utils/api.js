@@ -15,6 +15,8 @@ const http = axios.create({
   timeout: 12000
 });
 
+const AVAILABLE_ROLES = ["admin", "member"];
+
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
 
@@ -95,8 +97,47 @@ export async function checkPermission(resource, action) {
   return unwrap(response);
 }
 
+export async function fetchRolePermissions(role) {
+  const response = await http.get(`/rbac/roles/${role}/permissions`);
+  return unwrap(response);
+}
+
+export async function fetchMySettings() {
+  const response = await http.get("/settings/me");
+  return unwrap(response);
+}
+
+export async function updateMySettings(payload) {
+  const response = await http.patch("/settings/me", payload);
+  return unwrap(response);
+}
+
+export async function assignRoleToUser(userId, role) {
+  const response = await http.post(`/rbac/users/${userId}/roles`, {
+    role
+  });
+  return unwrap(response);
+}
+
+export async function removeUserRole(userId, role) {
+  const response = await http.delete(`/rbac/users/${userId}/roles/${role}`);
+  return unwrap(response);
+}
+
+export async function grantPermissionToRole(role, payload) {
+  const response = await http.post(`/rbac/roles/${role}/permissions`, payload);
+  return unwrap(response);
+}
+
+export async function revokePermissionFromRole(role, payload) {
+  const response = await http.delete(`/rbac/roles/${role}/permissions`, {
+    data: payload
+  });
+  return unwrap(response);
+}
+
 export function logout() {
   clearSession();
 }
 
-export { apiBaseUrl, http };
+export { AVAILABLE_ROLES, apiBaseUrl, http };

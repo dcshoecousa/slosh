@@ -14,7 +14,7 @@ from app.crud.user import user_crud
 from app.db.database import AsyncSessionLocal
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/oauth2/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

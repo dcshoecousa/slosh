@@ -23,6 +23,9 @@ asgi-correlation-id = "4.3.4"
 orjson = "3.10.18"
 pycasbin = "2.8.0"
 casbin-async-sqlalchemy-adapter = "1.17.0"
+taskiq = "^0.12.4"
+taskiq-postgresql = {extras = ["asyncpg"], version = "^0.4.0"}
+typer = "^0.25.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.3.5"
